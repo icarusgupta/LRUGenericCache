@@ -9,7 +9,7 @@ namespace LRUGenericCache
     {
         bool TryGet(string key, out object result);
 
-        Task<CacheItemNode> AddOrUpdate(string key, object value);
+        void AddOrUpdate(string key, object value);
 
         static long Count { get; }
 

@@ -54,7 +54,7 @@ namespace LRUGenericCache
             }
         }
 
-        public async Task<CacheItemNode> AddOrUpdate(string key, object value)
+        public async void AddOrUpdate(string key, object value)
         {
             SemaphoreSlim item_lock = _locks.GetOrAdd(key, k => new SemaphoreSlim(1, 1));
             await item_lock.WaitAsync();
@@ -69,14 +69,15 @@ namespace LRUGenericCache
                     _memoryCache.Remove(key);
                     _memoryCache.Set(key, cacheItemNode, _policy);
                     OnUpdate(source, cacheItemNode);
-                    return cacheItemNode;
                 }
                 else
                 {
-                    OnAddAsync(key);
+                    OnAdd(key);
                     _memoryCache.Set(key, cacheItemNode, _policy);
                     _lRUQueue.MoveToFront(cacheItemNode);
-                    return cacheItemNode;
+                    // For DEBUG purpose
+                    Console.WriteLine($"LRU queue state = {_lRUQueue.QueueState()}");
+                    Console.WriteLine($"Cache size = {Count}");
                 }
             }
             finally
@@ -85,7 +86,7 @@ namespace LRUGenericCache
             }
         }
 
-        public async void RemoveAsync(string key)
+        public async Task RemoveAsync(string key)
         {
             SemaphoreSlim item_lock = _locks.GetOrAdd(key, k => new SemaphoreSlim(1, 1));
             await item_lock.WaitAsync();
@@ -109,7 +110,7 @@ namespace LRUGenericCache
             try
             {
                 var allKeys = _memoryCache.Select(o => o.Key);
-                Parallel.ForEach(allKeys, async key => RemoveAsync(key));
+                Parallel.ForEach(allKeys, async key => await RemoveAsync(key));
             }
             catch
             {
@@ -123,9 +124,8 @@ namespace LRUGenericCache
             try
             {
                 var key_value_pairs = data.Select(d => (d.Item1, d.Item2));
-                Parallel.ForEach(data, async d => {
-                    var cin = await Instance.AddOrUpdate(d.Item1, d.Item2);
-                    _lRUQueue.MoveToFront(cin);
+                Parallel.ForEach(data, d => {
+                    Instance.AddOrUpdate(d.Item1, d.Item2);
                 });
             }
             catch
@@ -148,19 +148,20 @@ namespace LRUGenericCache
         }
 
  
-        public static void OnAddAsync(string key)
+        public static void OnAdd(string key)
         {
-            Console.WriteLine($"Cache size = {Count}");
             if (Count >= _capacity)
             {
                 CacheItemNode cin = _lRUQueue.RemoveLast();
                 _memoryCache.Remove(cin.Key);
+                // To ensure that we keep consistency between items in Cache
+                // and in _locks dictionary, we remove the entry for the evited 
+                // key in _locks.
                 if (!cin.Key.Equals(key))
                 {
                     SemaphoreSlim semaphore;
                     _locks.TryRemove(key, out semaphore);
                 }
-                Console.WriteLine($"LRU queue state = {_lRUQueue.QueueState()}");
             }
         }
      }
