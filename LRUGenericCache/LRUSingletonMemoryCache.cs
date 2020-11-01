@@ -86,7 +86,7 @@ namespace LRUGenericCache
             }
         }
 
-        public async Task RemoveAsync(string key)
+        public async Task Remove(string key)
         {
             SemaphoreSlim item_lock = _locks.GetOrAdd(key, k => new SemaphoreSlim(1, 1));
             await item_lock.WaitAsync();
@@ -105,12 +105,12 @@ namespace LRUGenericCache
             return _memoryCache.Contains(key);
         }
 
-        public bool ClearAsync()
+        public bool Clear()
         {
             try
             {
                 var allKeys = _memoryCache.Select(o => o.Key);
-                Parallel.ForEach(allKeys, async key => await RemoveAsync(key));
+                Parallel.ForEach(allKeys, async key => await Remove(key));
             }
             catch
             {
@@ -119,7 +119,7 @@ namespace LRUGenericCache
             return true;
         }
 
-        public bool PopulateAsync(List<Tuple<string, object>> data)
+        public bool Populate(List<Tuple<string, object>> data)
         {
             try
             {

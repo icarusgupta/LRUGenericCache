@@ -15,8 +15,8 @@ namespace LRUGenericCache
 
         bool ContainsKey(string key);
 
-        bool ClearAsync();
+        bool Clear();
 
-        bool PopulateAsync(List<Tuple<string, object>> data);
+        bool Populate(List<Tuple<string, object>> data);
     }
 }

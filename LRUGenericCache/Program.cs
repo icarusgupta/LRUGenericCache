@@ -16,7 +16,7 @@ namespace LRUGenericCache
             Tuple.Create("2", (object)2),
             Tuple.Create("3", (object)3),
             Tuple.Create("4", (object)4)};
-            cache.PopulateAsync(data);
+            cache.Populate(data);
             Thread.Sleep(rnd.Next(sleepTime));
             Console.WriteLine("AddOrUpdate 2");
             cache.AddOrUpdate("2", 20);
@@ -44,7 +44,7 @@ namespace LRUGenericCache
             bool status = cache.TryGet(key, out result);
             Console.WriteLine($"Get Value: {status}, {key}:{result}");
             Console.WriteLine($"Cache Size: {LRUSingletonMemoryCache.Count}");
-            Console.WriteLine($"Cache Cleared: {cache.ClearAsync()}, Cache Size: {LRUSingletonMemoryCache.Count}");
+            Console.WriteLine($"Cache Cleared: {cache.Clear()}, Cache Size: {LRUSingletonMemoryCache.Count}");
         }
 
         static void TestCaching()
